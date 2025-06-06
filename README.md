@@ -1,23 +1,24 @@
-# Research & Content Generator
+# Social Posting Agents
 
-A multi-agent pipeline for researching topics and generating social media content using OpenAI's GPT models, Pydantic for data validation, and LangGraph for orchestration.
+A multi-agent pipeline for researching topics, generating social media content, and creating images using OpenAI's models, Pydantic for data validation, and LangGraph for orchestration.
 
 ## Features
 
 - **Research Agent**: Gathers facts and structured data about user-specified topics
 - **Content Agent**: Generates platform-optimized content from research findings
+- **Image Agent**: Creates AI-generated images that complement the content
 - **LangGraph Orchestration**: Coordinates the workflow between agents
 - **Multiple Platforms**: Supports Twitter, LinkedIn, Facebook, Instagram, and blog posts
 - **Customizable Tone**: Choose from various tones like informative, persuasive, casual, etc.
-- **Web Interface**: Streamlit-based web app for easy interaction
+- **Web Interface**: Streamlit-based web app with image display
 - **CLI**: Command-line interface for automation and scripting
+- **Detailed Prompt Logging**: Records all prompts sent to AI models for debugging and transparency
 
 ## Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/pydantic-langchain-demo.git
-   cd pydantic-langchain-demo
+   git clone https://github.com/llanterme/social_posting_agents.git
    ```
 
 2. Install dependencies using Poetry:
@@ -37,59 +38,77 @@ A multi-agent pipeline for researching topics and generating social media conten
 Launch the Streamlit web app:
 
 ```bash
-streamlit run app.py
+poetry run streamlit run app.py
 ```
 
 Then open your browser to `http://localhost:8501`
 
+The web interface allows you to:
+- Enter your topic and customize platform, tone, and number of facts
+- View the generated social media post
+- See the AI-generated image alongside your content
+- Explore the research facts used to create the content
+
 ### Command Line Interface
 
 ```bash
-python cli.py "Your topic here" --platform twitter --tone informative --max-facts 5
+poetry run python cli.py "Your topic here" --platform twitter --tone informative --max-facts 5
 ```
+
+The CLI provides options for automated content generation and will save generated images to the `images/` directory.
 
 ### As a Library
 
 ```python
 from orchestrator import Orchestrator
-import asyncio
 
-async def main():
+def main():
     orchestrator = Orchestrator(openai_api_key="your-api-key")
-    result = await orchestrator.run_workflow(
+    result = orchestrator.run_workflow(
         topic="Benefits of renewable energy",
         platform="twitter",
         tone="informative",
         max_facts=5
     )
     print(result["content"])
+    print(f"Image saved to: {result['image_path']}")
 
-asyncio.run(main())
+if __name__ == "__main__":
+    main()
 ```
 
 ## Project Structure
 
 ```
 .
-├── agents/                  # Agent implementations
+├── agents/                   # Agent implementations
 │   ├── __init__.py
-│   ├── research_agent.py     # Research agent implementation
-│   └── content_agent.py      # Content agent implementation
-├── models/                   # Pydantic models
+│   ├── research_agent.py      # Research agent implementation
+│   ├── content_agent.py       # Content agent implementation
+│   └── image_agent.py         # Image agent implementation
+├── models/                    # Pydantic models
 │   ├── __init__.py
-│   ├── research_models.py    # Research agent models
-│   └── content_models.py     # Content agent models
-├── tests/                    # Unit and integration tests
+│   ├── research_models.py     # Research agent models
+│   ├── content_models.py      # Content agent models
+│   └── image_models.py        # Image agent models
+├── utils/                     # Utility functions
+│   ├── __init__.py
+│   └── logging_config.py      # Centralized logging configuration
+├── tests/                     # Unit and integration tests
 │   ├── __init__.py
 │   ├── test_research_agent.py
 │   ├── test_content_agent.py
-│   ├── test_research_agent_integration.py
-│   └── test_content_agent_integration.py
-├── orchestrator.py           # LangGraph workflow orchestration
-├── cli.py                    # Command-line interface
-├── app.py                    # Streamlit web interface
-├── requirements.txt          # Python dependencies
-└── README.md                # This file
+│   └── test_image_agent.py
+├── logs/                      # Log directory (created automatically)
+│   ├── agent_pipeline.log     # General application logs
+│   └── prompts.log            # Detailed prompt logging
+├── images/                    # Generated images directory
+├── orchestrator.py            # LangGraph workflow orchestration
+├── cli.py                     # Command-line interface
+├── app.py                     # Streamlit web interface
+├── pyproject.toml             # Poetry dependency management
+├── poetry.lock                # Poetry lock file
+└── README.md                  # This file
 ```
 
 ## Configuration
@@ -97,6 +116,15 @@ asyncio.run(main())
 Environment variables:
 
 - `OPENAI_API_KEY`: Your OpenAI API key (required)
+
+## Prompt Logging
+
+All prompts sent to AI models are logged for transparency and debugging purposes:
+
+- **General logs**: `logs/agent_pipeline.log` - Application logs, errors, and general info
+- **Prompt logs**: `logs/prompts.log` - Detailed logging of all prompts sent to OpenAI
+
+The logging system uses a rotating file handler to manage log sizes and prevent them from growing too large.
 
 ## Contributing
 
