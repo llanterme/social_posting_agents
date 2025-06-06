@@ -81,9 +81,3 @@
 └── README.md                # Project documentation
 ```
 
-## Next Steps
-- [ ] Add more platform-specific templates
-- [ ] Implement rate limiting and retry logic
-- [ ] Add support for more LLM providers
-- [ ] Implement content caching
-- [ ] Add user authentication for the web interface

@@ -44,4 +44,4 @@ alwaysApply: true
 
 ## 4. Changes, New Features, and Enhancements
 
-- Always review “## Changes, new features and enhancements ##” in PLANNING.md to ensure alignment with the latest requirements. That section in PLANNING.md supersedes any older feature request.  
+- Always compare the PLANNING.MD to the TASK.MD to see if any new functionality or features have been requested.
