@@ -49,6 +49,13 @@ Both agents will be orchestrated via a lightweight **LangGraph** pattern, with i
                                                 │ formatted post (string)
                                                 ▼
                                      ┌───────────────────────────┐
+                                     │ Image Agent (Node C)        │
+                                     │ - Pydantic Input: Post      │
+                                     │ - OpenAI API call → image   │
+                                     └──────────┬────────────────┘
+                                                │ formatted post (string)
+                                                ▼
+                                     ┌───────────────────────────┐
                                      │  Demo CLI / Streamlit UI  │
                                      │  Displays final post      │
                                      └───────────────────────────┘

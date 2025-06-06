@@ -111,17 +111,31 @@ class ContentAgent:
             
 {json.dumps(request.facts, indent=2)}
 
-IMPORTANT CONSTRAINTS:
-1. The post MUST be less than {max_length} characters (Twitter's limit).
+CRITICAL CHARACTER LIMIT:
+1. Your post MUST be LESS THAN {max_length} characters.
 2. Be extremely concise while maintaining the key information.
 3. Count the characters carefully before finalizing.
+4. This is a hard limit - longer content will be rejected.
+            """
+        elif request.platform == PlatformType.BLOG:
+            prompt = f"""Generate a {request.tone} blog post using the following facts:
+            
+{json.dumps(request.facts, indent=2)}
+
+CRITICAL CHARACTER LIMIT:
+1. Your blog post MUST be LESS THAN {max_length} characters.
+2. Be concise while maintaining key information and professional tone.
+3. Structure with a brief introduction, key points, and conclusion.
+4. This is a hard limit - longer content will be rejected.
             """
         else:
             prompt = f"""Generate a {request.tone} {request.platform} post using the following facts:
             
 {json.dumps(request.facts, indent=2)}
 
-Keep the content under {max_length} characters.
+CRITICAL CHARACTER LIMIT:
+1. Your content MUST be LESS THAN {max_length} characters.
+2. This is a hard limit - longer content will be rejected.
             """
         
         # Add call to action if requested
@@ -137,6 +151,48 @@ Keep the content under {max_length} characters.
         
         return prompt
     
+    def _process_content(self, content: str, request: ContentRequest) -> str:
+        """Process and potentially truncate content to meet requirements.
+        
+        Args:
+            content: Generated content string.
+            request: Original content request.
+            
+        Returns:
+            Processed content that meets requirements.
+        """
+        # Check if content is empty
+        if not content or not content.strip():
+            logger.warning("Content is empty or whitespace only")
+            return ""
+            
+        # Get platform-specific config
+        platform_config = self.PLATFORM_CONFIGS[request.platform]
+        max_length = platform_config["max_length"]
+        
+        # Check if content needs truncation
+        if len(content) > max_length:
+            # For Twitter, truncate with ellipsis to leave room for attribution
+            if request.platform == PlatformType.TWITTER:
+                truncated = content[:max_length-4] + "..."
+            else:
+                # Find the last complete sentence that fits within the limit
+                # Look for the last period, exclamation mark, or question mark followed by a space
+                # that will fit within our limit
+                last_period = max(content[:max_length-3].rfind('. '), 
+                               content[:max_length-3].rfind('! '), 
+                               content[:max_length-3].rfind('? '))
+                
+                if last_period > max_length // 2:  # If we found a good sentence break
+                    truncated = content[:last_period+1] + "..."
+                else:  # Otherwise just truncate
+                    truncated = content[:max_length-3] + "..."
+            
+            logger.warning(f"Content truncated from {len(content)} to {len(truncated)} characters")
+            return truncated
+        
+        return content
+        
     def _validate_content(self, content: str, request: ContentRequest) -> bool:
         """Validate content against platform requirements.
         
@@ -152,16 +208,7 @@ Keep the content under {max_length} characters.
             logger.warning("Content is empty or whitespace only")
             return False
             
-        # Get platform-specific config
-        platform_config = self.PLATFORM_CONFIGS[request.platform]
-        max_length = platform_config["max_length"]
-        
-        # Check content length
-        if len(content) > max_length:
-            logger.warning(f"Content exceeds max length: {len(content)} > {max_length}")
-            return False
-            
-        # Add additional validation rules here as needed
+        # Content length is now handled by _process_content, so we just validate it's not empty
         return True
     
     def generate_content(self, request: ContentRequest) -> ContentResponse:
@@ -218,16 +265,20 @@ Keep the content under {max_length} characters.
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7,
-                max_tokens=500,
+                max_tokens=500
             )
             
             # Extract the generated content
             content = response.choices[0].message.content.strip()
             
+            # Process the content (truncate if needed)
+            content = self._process_content(content, request)
+            
             # Validate the content
             if not self._validate_content(content, request):
+                logger.error("Error generating content: Generated content failed validation")
                 raise ValueError("Generated content failed validation")
-            
+                
             # Create and return the response
             return ContentResponse(
                 content=content,
@@ -237,7 +288,6 @@ Keep the content under {max_length} characters.
                 hashtags=hashtags,
                 created_at=datetime.now(timezone.utc).isoformat()
             )
-            
         except Exception as e:
             logger.error(f"Error generating content: {str(e)}")
             raise

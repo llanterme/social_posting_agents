@@ -37,8 +37,19 @@
   - Integration tests with mocked API
   - Test coverage for edge cases
 
+- [x] Created ImageRequest/ImageResponse Pydantic models in `models/image_models.py`
+  - Implemented validation and type hints
+  - Added docstrings and field descriptions
+  - Added size and style options
+
+- [x] Implemented ImageAgent class in `agents/image_agent.py`
+  - Added OpenAI API integration for image generation using gpt-image-1 model
+  - Implemented prompt formatting based on content and platform
+  - Added local image saving functionality
+  - Handled both URL-based and base64-encoded image responses
+
 - [x] Implemented LangGraph orchestration in `orchestrator.py`
-  - Created workflow for research → content generation
+  - Created workflow for research → content generation → image generation
   - Added state management
   - Implemented error handling
 
@@ -63,11 +74,13 @@
 ├── agents/                  # Agent implementations
 │   ├── __init__.py
 │   ├── research_agent.py     # Research agent implementation
-│   └── content_agent.py      # Content agent implementation
+│   ├── content_agent.py      # Content agent implementation
+│   └── image_agent.py        # Image agent implementation
 ├── models/                   # Pydantic models
 │   ├── __init__.py
 │   ├── research_models.py    # Research agent models
-│   └── content_models.py     # Content agent models
+│   ├── content_models.py     # Content agent models
+│   └── image_models.py       # Image agent models
 ├── tests/                    # Unit and integration tests
 │   ├── __init__.py
 │   ├── test_research_agent.py

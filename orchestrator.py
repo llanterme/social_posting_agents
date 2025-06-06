@@ -5,8 +5,8 @@ from enum import Enum
 from langgraph.graph import StateGraph, START, END
 from pydantic import BaseModel, Field
 
-from models import ResearchRequest, ResearchResponse, ContentRequest, ContentResponse
-from agents import ResearchAgent, ContentAgent
+from models import ResearchRequest, ResearchResponse, ContentRequest, ContentResponse, ImageRequest, ImageResponse
+from agents import ResearchAgent, ContentAgent, ImageAgent
 
 
 class AgentState(TypedDict):
@@ -15,6 +15,8 @@ class AgentState(TypedDict):
     research_response: ResearchResponse
     content_request: ContentRequest
     content_response: ContentResponse
+    image_request: ImageRequest
+    image_response: ImageResponse
     platform: str
     tone: str
     
@@ -30,6 +32,7 @@ class Orchestrator:
         """
         self.research_agent = ResearchAgent(api_key=openai_api_key)
         self.content_agent = ContentAgent(api_key=openai_api_key)
+        self.image_agent = ImageAgent(api_key=openai_api_key)
     
     def research_node(self, state: AgentState) -> AgentState:
         """Node that runs the research agent."""
@@ -73,6 +76,25 @@ class Orchestrator:
             **state,
             "content_response": content_response
         }
+        
+    def image_node(self, state: AgentState) -> AgentState:
+        """Node that runs the image agent."""
+        # Create image request from content response
+        image_request_params = {
+            "content": state["content_response"].content,
+            "platform": state["platform"],
+            "topic": state["research_request"].topic
+        }
+        image_request = ImageRequest(**image_request_params)
+        
+        # Generate the image
+        image_response = self.image_agent.generate_image(image_request)
+        
+        return {
+            **state,
+            "image_request": image_request,
+            "image_response": image_response
+        }
     
     def create_workflow(self):
         """Create and return the LangGraph workflow."""
@@ -82,11 +104,13 @@ class Orchestrator:
         # Add nodes
         workflow.add_node("research", self.research_node)
         workflow.add_node("generate_content", self.content_node)
+        workflow.add_node("generate_image", self.image_node)
         
         # Define edges
         workflow.add_edge(START, "research")
         workflow.add_edge("research", "generate_content")
-        workflow.add_edge("generate_content", END)
+        workflow.add_edge("generate_content", "generate_image")
+        workflow.add_edge("generate_image", END)
         
         # Compile the workflow
         return workflow.compile()
@@ -120,8 +144,9 @@ class Orchestrator:
             "tone": tone,
             "research_response": None,
             "content_request": None,
-            "max_length": max_length,
-            "content_response": None
+            "content_response": None,
+            "image_request": None,
+            "image_response": None
         }
         
         # Create and run the workflow
@@ -139,5 +164,7 @@ class Orchestrator:
             ],
             "content": result["content_response"].content,
             "hashtags": result["content_response"].hashtags,
-            "word_count": result["content_response"].word_count
+            "word_count": result["content_response"].word_count,
+            "image_path": result["image_response"].image_path,
+            "image_prompt": result["image_response"].prompt
         }
