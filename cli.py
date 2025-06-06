@@ -8,9 +8,13 @@ from typing import Optional
 from dotenv import load_dotenv
 
 from orchestrator import Orchestrator
+from utils.logging_config import configure_logging
 
 # Load environment variables from .env file if it exists
 load_dotenv()
+
+# Configure logging
+configure_logging()
 
 
 def parse_arguments():
@@ -84,13 +88,18 @@ def main():
     # Initialize the orchestrator
     orchestrator = Orchestrator(openai_api_key=api_key)
     
+    # Inform about prompt logging
+    print("All agent prompts will be logged to logs/prompts.log")
+    print("General application logs available in logs/agent_pipeline.log")
+    print()
+    
     try:
         # Run the workflow
         print(f"Researching topic: {args.topic}")
         print(f"Platform: {args.platform}, Tone: {args.tone}")
         print("Generating content...\n")
         
-        result = orchestrator.run_workflow(
+        workflow_result = orchestrator.run_workflow(
             topic=args.topic,
             platform=args.platform,
             tone=args.tone,
@@ -99,20 +108,24 @@ def main():
         )
         
         # Print the results
-        print("=" * 50)
-        print(f"Generated {args.platform.capitalize()} Post:")
-        print("-" * 50)
-        print(result["content"])
-        print("\n" + "=" * 50)
+        print("\n==================================================\n"
+              f"Generated {args.platform.capitalize()} Post:\n"
+              "--------------------------------------------------\n"
+              f"{workflow_result['content']}\n"
+              "==================================================")
         
-        # Print hashtags if any
-        if result.get("hashtags"):
-            print("\nHashtags: " + " ".join(result["hashtags"]))
+        if workflow_result['hashtags']:
+            print(f"\nHashtags: {' '.join(workflow_result['hashtags'])}")
+            
+        # Print image information
+        if 'image_path' in workflow_result:
+            print(f"\nImage generated and saved to: {workflow_result['image_path']}")
+            print(f"Image prompt: {workflow_result['image_prompt'][:100]}...")
         
         # Save to file if requested
         if args.output:
             with open(args.output, 'w') as f:
-                json.dump(result, f, indent=2)
+                json.dump(workflow_result, f, indent=2)
             print(f"\nResults saved to {args.output}")
     
     except Exception as e:

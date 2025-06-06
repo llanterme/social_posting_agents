@@ -1,14 +1,17 @@
 """Streamlit web interface for the research and content pipeline."""
 import streamlit as st
-import asyncio
 import os
 from typing import Dict, Any
 
 from dotenv import load_dotenv
 from orchestrator import Orchestrator
+from utils.logging_config import configure_logging
 
 # Load environment variables from .env file if it exists
 load_dotenv()
+
+# Configure logging
+configure_logging()
 
 # Page config
 st.set_page_config(
@@ -118,30 +121,57 @@ if submitted:
     # Initialize the orchestrator
     orchestrator = Orchestrator(openai_api_key=api_key)
     
+    # Add info about prompt logging
+    st.info("All agent prompts will be logged to logs/prompts.log")
+    
     # Show progress
     with st.spinner("Researching topic and generating content..."):
         try:
-            # Run the workflow
-            result = asyncio.run(
-                orchestrator.run_workflow(
-                    topic=topic,
-                    platform=platform,
-                    tone=tone,
-                    max_facts=max_facts
-                )
+            # Run the workflow (directly, not as a coroutine)
+            result = orchestrator.run_workflow(
+                topic=topic,
+                platform=platform,
+                tone=tone,
+                max_facts=max_facts
             )
             
             # Display results
-            st.success("Content generated successfully!")
+            st.success("Content and image generated successfully!")
             
-            # Show the generated content
-            with st.expander("Generated Content", expanded=True):
+            # Show the generated image and content
+            with st.expander("Generated Content & Image", expanded=True):
+                # Display the generated image
+                if "image_path" in result and result["image_path"]:
+                    # Set up a container with custom styling
+                    st.markdown("### Generated Image")
+                    # Display the image with a reasonable width
+                    try:
+                        st.image(
+                            result["image_path"],
+                            caption="AI-generated image", 
+                            use_container_width=True
+                        )
+                    except Exception as img_error:
+                        st.error(f"Error displaying image: {str(img_error)}")
+                        st.code(f"Image path: {result['image_path']}")
+                
+                # Display the generated content
                 st.markdown(f"### {platform.capitalize()} Post")
                 st.markdown("---")
                 st.markdown(result["content"])
                 
                 if result.get("hashtags"):
                     st.markdown("\n" + " ".join(f"`{tag}`" for tag in result["hashtags"]))
+                
+            # Display image prompt if available, but outside the main expander
+            if "image_prompt" in result:
+                with st.expander("Image Generation Prompt", expanded=False):
+                    st.text_area(
+                        "Prompt used to generate the image",
+                        value=result["image_prompt"],
+                        height=100,
+                        disabled=True
+                    )
             
             # Show research facts
             with st.expander("Research Facts", expanded=False):
