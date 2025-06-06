@@ -149,7 +149,7 @@ if submitted:
                         st.image(
                             result["image_path"],
                             caption="AI-generated image", 
-                            use_column_width=True
+                            use_container_width=True
                         )
                     except Exception as img_error:
                         st.error(f"Error displaying image: {str(img_error)}")
@@ -163,15 +163,15 @@ if submitted:
                 if result.get("hashtags"):
                     st.markdown("\n" + " ".join(f"`{tag}`" for tag in result["hashtags"]))
                 
-                # Display image prompt if available
-                if "image_prompt" in result:
-                    with st.expander("Image Generation Prompt"):
-                        st.text_area(
-                            "Prompt used to generate the image",
-                            value=result["image_prompt"],
-                            height=100,
-                            disabled=True
-                        )
+            # Display image prompt if available, but outside the main expander
+            if "image_prompt" in result:
+                with st.expander("Image Generation Prompt", expanded=False):
+                    st.text_area(
+                        "Prompt used to generate the image",
+                        value=result["image_prompt"],
+                        height=100,
+                        disabled=True
+                    )
             
             # Show research facts
             with st.expander("Research Facts", expanded=False):
