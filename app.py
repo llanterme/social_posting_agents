@@ -6,9 +6,13 @@ from typing import Dict, Any
 
 from dotenv import load_dotenv
 from orchestrator import Orchestrator
+from utils.logging_config import configure_logging
 
 # Load environment variables from .env file if it exists
 load_dotenv()
+
+# Configure logging
+configure_logging()
 
 # Page config
 st.set_page_config(
@@ -117,6 +121,9 @@ if submitted:
     
     # Initialize the orchestrator
     orchestrator = Orchestrator(openai_api_key=api_key)
+    
+    # Add info about prompt logging
+    st.info("All agent prompts will be logged to logs/prompts.log")
     
     # Show progress
     with st.spinner("Researching topic and generating content..."):

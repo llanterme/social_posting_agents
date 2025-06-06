@@ -1,17 +1,20 @@
 """Content Agent implementation for generating social media content."""
 import json
 import logging
+import re
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 
 from openai import OpenAI
 from pydantic import ValidationError
 
-from models import ContentRequest, ContentResponse, PlatformType
+from models import ContentRequest, ContentResponse, PlatformType, ToneType
+from utils.logging_config import configure_logging
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+configure_logging()
 logger = logging.getLogger(__name__)
+prompt_logger = logging.getLogger('prompts')
 
 
 class ContentAgent:
@@ -252,6 +255,9 @@ CRITICAL CHARACTER LIMIT:
         
         # Format the prompt
         prompt = self._format_prompt(request)
+        
+        # Log the complete prompt
+        prompt_logger.info(f"CONTENT AGENT PROMPT:\nPlatform: {request.platform}\nTone: {request.tone}\nSystem: You are a social media content creator that generates engaging posts.\nUser: {prompt}")
         
         try:
             # Call the OpenAI API

@@ -8,9 +8,13 @@ from typing import Optional
 from dotenv import load_dotenv
 
 from orchestrator import Orchestrator
+from utils.logging_config import configure_logging
 
 # Load environment variables from .env file if it exists
 load_dotenv()
+
+# Configure logging
+configure_logging()
 
 
 def parse_arguments():
@@ -83,6 +87,11 @@ def main():
     
     # Initialize the orchestrator
     orchestrator = Orchestrator(openai_api_key=api_key)
+    
+    # Inform about prompt logging
+    print("All agent prompts will be logged to logs/prompts.log")
+    print("General application logs available in logs/agent_pipeline.log")
+    print()
     
     try:
         # Run the workflow

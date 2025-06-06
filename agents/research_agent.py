@@ -8,10 +8,12 @@ from openai import OpenAI
 from pydantic import ValidationError
 
 from models import ResearchRequest, ResearchResponse, Fact
+from utils.logging_config import configure_logging
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+configure_logging()
 logger = logging.getLogger(__name__)
+prompt_logger = logging.getLogger('prompts')
 
 
 class ResearchAgent:
@@ -139,6 +141,9 @@ Format as a JSON array of objects. Example:
     "relevance_score": 0.95
   }}
 ]"""
+        
+        # Log the complete prompt
+        prompt_logger.info(f"RESEARCH AGENT PROMPT:\nTopic: {request.topic}\nSystem: You are a helpful research assistant that provides accurate, factual information in JSON format.\nUser: {prompt}")
         
         try:
             # Call the OpenAI API

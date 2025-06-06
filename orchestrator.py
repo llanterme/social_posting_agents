@@ -1,4 +1,5 @@
 """LangGraph orchestration for the research and content pipeline."""
+import logging
 from typing import TypedDict, List, Dict, Any, Literal, Annotated, Optional
 from enum import Enum
 
@@ -7,7 +8,11 @@ from pydantic import BaseModel, Field
 
 from models import ResearchRequest, ResearchResponse, ContentRequest, ContentResponse, ImageRequest, ImageResponse
 from agents import ResearchAgent, ContentAgent, ImageAgent
+from utils.logging_config import configure_logging
 
+# Configure logging
+configure_logging()
+logger = logging.getLogger(__name__)
 
 class AgentState(TypedDict):
     """State for the LangGraph workflow."""

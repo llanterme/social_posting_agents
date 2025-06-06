@@ -10,10 +10,12 @@ from openai import OpenAI
 from pydantic import ValidationError
 
 from models.image_models import ImageRequest, ImageResponse
+from utils.logging_config import configure_logging
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+configure_logging()
 logger = logging.getLogger(__name__)
+prompt_logger = logging.getLogger('prompts')
 
 
 class ImageAgent:
@@ -192,6 +194,9 @@ class ImageAgent:
         # Format the prompt
         prompt = self._format_prompt(request)
         logger.info(f"Generating image with prompt: {prompt}")
+        
+        # Log the complete prompt with model information
+        prompt_logger.info(f"IMAGE AGENT PROMPT:\nModel: {self.model}\nTopic: {request.topic}\nPlatform: {request.platform}\nStyle: {request.style}\nPrompt: {prompt}")
         
         try:
             # Parameters for image generation
