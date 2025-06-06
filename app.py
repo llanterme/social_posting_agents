@@ -1,6 +1,5 @@
 """Streamlit web interface for the research and content pipeline."""
 import streamlit as st
-import asyncio
 import os
 from typing import Dict, Any
 
@@ -128,14 +127,12 @@ if submitted:
     # Show progress
     with st.spinner("Researching topic and generating content..."):
         try:
-            # Run the workflow
-            result = asyncio.run(
-                orchestrator.run_workflow(
-                    topic=topic,
-                    platform=platform,
-                    tone=tone,
-                    max_facts=max_facts
-                )
+            # Run the workflow (directly, not as a coroutine)
+            result = orchestrator.run_workflow(
+                topic=topic,
+                platform=platform,
+                tone=tone,
+                max_facts=max_facts
             )
             
             # Display results
