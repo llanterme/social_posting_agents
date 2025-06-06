@@ -164,10 +164,21 @@ Format as a JSON array of objects. Example:
             validated_facts = self._validate_facts(raw_facts)
             
             # Filter facts by minimum relevance
-            filtered_facts = [
+            relevant_facts = [
                 fact for fact in validated_facts 
                 if fact.relevance_score >= request.min_relevance
-            ][:request.max_facts]
+            ]
+            
+            # Ensure we have at least one fact even if none meet the threshold
+            filtered_facts = relevant_facts[:request.max_facts] if relevant_facts else [
+                # If no facts meet the threshold, return the highest-scoring facts
+                sorted(validated_facts, key=lambda x: x.relevance_score, reverse=True)[0] 
+                if validated_facts else 
+                # Create a fallback fact if no facts were found at all
+                Fact(fact=f"Information about {request.topic} could not be confirmed.", 
+                     source="No reliable source found", 
+                     relevance_score=0.5)
+            ]
             
             # Create and return the response
             return ResearchResponse(

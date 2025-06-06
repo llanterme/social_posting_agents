@@ -136,16 +136,42 @@ if submitted:
             )
             
             # Display results
-            st.success("Content generated successfully!")
+            st.success("Content and image generated successfully!")
             
-            # Show the generated content
-            with st.expander("Generated Content", expanded=True):
+            # Show the generated image and content
+            with st.expander("Generated Content & Image", expanded=True):
+                # Display the generated image
+                if "image_path" in result and result["image_path"]:
+                    # Set up a container with custom styling
+                    st.markdown("### Generated Image")
+                    # Display the image with a reasonable width
+                    try:
+                        st.image(
+                            result["image_path"],
+                            caption="AI-generated image", 
+                            use_column_width=True
+                        )
+                    except Exception as img_error:
+                        st.error(f"Error displaying image: {str(img_error)}")
+                        st.code(f"Image path: {result['image_path']}")
+                
+                # Display the generated content
                 st.markdown(f"### {platform.capitalize()} Post")
                 st.markdown("---")
                 st.markdown(result["content"])
                 
                 if result.get("hashtags"):
                     st.markdown("\n" + " ".join(f"`{tag}`" for tag in result["hashtags"]))
+                
+                # Display image prompt if available
+                if "image_prompt" in result:
+                    with st.expander("Image Generation Prompt"):
+                        st.text_area(
+                            "Prompt used to generate the image",
+                            value=result["image_prompt"],
+                            height=100,
+                            disabled=True
+                        )
             
             # Show research facts
             with st.expander("Research Facts", expanded=False):
