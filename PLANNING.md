@@ -1,0 +1,51 @@
+# PLANNING.md
+
+## Project Overview
+We are building a **simple demo** that showcases a multi-agent pipeline using the Windsurf coding agent framework. Our demo will comprise:
+- **Research Agent**: Gathers facts and structured data about user-specified topics.
+- **Content Agent**: Consumes the research output and produces social-media–optimized posts.
+
+Both agents will be orchestrated via a lightweight **LangGraph** pattern, with inputs/outputs strictly defined by **Pydantic AI** models. We will call the **OpenAI API** (e.g. `gpt-4o``) directly for all LLM inference, rather than hosting any model locally. The project will be structured as a clean, isolated Python project managed by Poetry.
+
+### Goals
+- Demonstrate a two-node LLM workflow:
+  1. **Node 1 (Research Agent)**: Given a topic prompt, call OpenAI to produce structured “facts” about that topic.
+  2. **Node 2 (Content Agent)**: Take the structured facts and call OpenAI to generate a polished, social-media–ready post.
+- Enforce **typed inputs/outputs** via Pydantic AI, with automatic prompt generation and validation.
+- Wire the two agents together in a **LangGraph** so that Node 1’s output flows seamlessly into Node 2.
+- Use the **OpenAI Python SDK** for all model calls; ensure `OPENAI_API_KEY` is set in the environment.
+
+---
+
+## Technology Stack
+- **Language:** Python 3.9+  
+- **Dependency Management:** Poetry (`pyproject.toml`, `poetry.lock`)  
+- **Virtual Environments:** `poetry shell` (no global installs)  
+- **LLM Provider:** OpenAI API (`openai` Python package)  
+- **Typed Models:** Pydantic AI (schema + prompt generation)  
+- **Orchestration:** LangGraph (a DAG abstraction)  
+- **Windsurf Coding Agent:** For code/progress orchestration.
+
+---
+
+## High-Level Architecture
+
+```text
+┌──────────────────────────┐        ┌───────────────────────────┐
+│    User Input: “Topic”  │  ──→   │  Research Agent (Node A)  │
+│  (e.g., “Electric Cars”)│        │  - Pydantic Request Model │
+└──────────────────────────┘        │  - OpenAI API call → facts │
+                                     └──────────┬────────────────┘
+                                                │ passes Pydantic output
+                                                ▼
+                                     ┌───────────────────────────┐
+                                     │ Content Agent (Node B)    │
+                                     │ - Pydantic Input: Facts   │
+                                     │ - OpenAI API call → post  │
+                                     └──────────┬────────────────┘
+                                                │ formatted post (string)
+                                                ▼
+                                     ┌───────────────────────────┐
+                                     │  Demo CLI / Streamlit UI  │
+                                     │  Displays final post      │
+                                     └───────────────────────────┘
